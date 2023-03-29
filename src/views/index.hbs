@@ -1,0 +1,427 @@
+<body>
+    <div class="container">
+        <div class="row d-flex justify-content-end pt-5 pr-3">
+            {{#if success}}
+            <div class="alert alert-success alert-dismissible fade show text-right" role="alert"
+                id="success-alert">
+                <button type="button" class="close" data-dismiss="alert">&times</button>
+                {{{ success }}}
+            </div>
+            {{/if}}
+
+            {{#if error}}
+            <div class="alert alert-danger alert-dismissible fade show text-right" role="alert"
+                id="error-alert">
+                <button type="button" class="close" data-dismiss="alert">&times</button>
+                {{{ error }}}
+            </div>
+            {{/if}}
+        </div>
+        <div class="row align-items-center pb-5">
+
+            <div class="col-6">
+                <h3>
+                    File Manager</h2>
+            </div>
+            <div class="col-6">
+                <div class="dropdown text-right">
+                    Xin chào <a class="dropdown-toggle text-primary" data-toggle="dropdown">{{ username }}</a>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="#">
+                            <i class="fas fa-info-circle"></i>
+                            &nbsp;&nbsp;Cập nhật thông tin
+                        </a>
+                        <a class="dropdown-item" href="/logout">
+                            <i class="fas fa-sign-out-alt"></i>&nbsp;&nbsp; Đăng xuất</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="#">Home</a></li>
+            <li class="breadcrumb-item"><a href="#">Products</a></li>
+            <li class="breadcrumb-item active">Accessories</li>
+        </ol>
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <span class="input-group-text">
+                    <span class="fa fa-search"></span>
+                </span>
+            </div>
+            <input type="text" class="form-control" placeholder="Search">
+        </div>
+        <div class="btn-group my-3">
+            <a type="button" class="btn btn-light border" href="#" data-toggle="modal" data-target="#new-folder-dialog">
+                    <i class="fas fa-file"></i> New folder</a>
+            </button>
+            <a type="button" class="btn btn-light border" href="#" data-toggle="modal" data-target="#new-file-dialog">
+                    <i class="fas fa-file"></i> Create text file</a>
+            </button>
+        </div>
+        <table class="table table-hover border">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Size</th>
+                    <th>Last modified</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{!-- Get Folder --}}
+                {{#each folders}}
+                <tr>
+                    <td>
+                        <i class="fa fa-folder"></i>
+                        <a href="#">{{ this.name }}</a>
+                    </td>
+                    <td>{{ this.type }}</td>
+                    <td>{{#if (ifeq this.size 0 )}} - {{else}} {{ this.size }} {{/if}}</td>
+                    <td>{{ this.last_modified }}</td>
+                    <td>
+                        <a href="/download?filename={{this.name}}">
+                            <span><i class="fa fa-download action"></i></span></a>
+                        <a href="#" class="rename-file" data-toggle="modal" data-target="#confirm-rename" 
+                            data-name="{{this.name}}" data-type="{{this.type}}">
+                            <span><i class="fa fa-edit action"></i></span></a>
+                        <a href="#" class="delete-file" data-toggle="modal" data-target="#confirm-delete" data-name="{{this.name}}">
+                            <span><i class="fa fa-trash action"></i></span></a>
+                    </td>
+                </tr>
+                {{/each}}
+
+                {{!-- Get File --}}
+                {{#each files}}
+                <tr>
+                    <td>
+                        <i class="" id="icon-file-{{ this.index }}" data-extention="{{ this.ext }}"></i>
+                        <a href="#">{{ this.name }} </a>
+                    </td>
+                    <td id="type-file-{{ this.index }}"></td>
+                    <td>{{#if (ifeq this.size 0 )}} - {{else}} {{ this.size }} {{/if}}</td>
+                    <td>{{ this.last_modified }}</td>
+                    <td>
+                        <a href="/download?filename={{this.name}}">
+                            <span><i class="fa fa-download action"></i></span>
+                        </a>
+                        <a href="#" class="rename-file" data-toggle="modal" data-target="#confirm-rename" 
+                            data-name="{{this.name}}" data-type="{{this.type}}">
+                            <span><i class="fa fa-edit action"></i></span></a>
+                        <a href="#" class="delete-file" data-toggle="modal" data-target="#confirm-delete" data-name="{{this.name}}">
+                            <span><i class="fa fa-trash action"></i></span></a>
+                    </td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+        <div class="border rounded mb-3 mt-5 p-3">
+            <h4>File upload</h4>
+            <form action="/upload?_csrf={{csrfToken}}" method="post" enctype="multipart/form-data">
+                <div class="form-group">
+                    <div class="custom-file">
+                        <input type="file" class="custom-file-input" id="customFile" name="file_upload" accept="*">
+                        <label class="custom-file-label" for="customFile">Choose file</label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="progress" style="height:5px">
+                        <div class="progress-bar bg-success" style="width:40%;height:10px"></div>
+                    </div>
+                </div>
+                <p class="small">Người dùng chỉ được upload tập tin có kích thước tối đa là 20 MB. Các tập tin thực thi
+                    (*.exe, *.msi, *.sh) không được phép upload.</p>
+                <p class="small">Khi nhấn nút upload thì</p>
+                <ul class="small">
+                    <li>Progress bar sẽ hiển thị tiến độ của quá trình upload. Ban đầu progress bar bị ẩn đi.</li>
+                    <li>Khi đang diễn ra quá trình upload thì button <strong>Upload</strong> sẽ bị disabled.</li>
+                    <li>Sau khi upload thành công thì progress bar được ẩn đi, file sẽ được hiển thị trong danh sách bên
+                        trên và button được enabled trở lại.</li>
+                </ul>
+                <button type="submit" class="btn btn-success px-5">Upload</button>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- Delete dialog -->
+    <div class="modal fade" id="confirm-delete">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                
+                <div class="modal-header">
+                    <h4 class="modal-title">Xóa tập tin</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <div class="modal-body">
+                    Bạn có chắc rằng muốn xóa tập tin <strong id="file-delete"></strong>
+                </div>
+
+                <div class="modal-footer">
+                    <form method="get" action="/delete">
+                        <input type="hidden" id="name-file-delete" name="name_file_delete" value="">
+                        <button type="submit" class="btn btn-danger">Xóa</button>
+                    </form>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Không</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Rename dialog -->
+    <div class="modal fade" id="confirm-rename">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="post" action="/rename">
+                    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                    <input type="hidden" id="file-type" name="file_type" value="">
+                    <input type="hidden" id="file-name" name="old_name" value="">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Đổi tên</h4>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <p>Nhập tên mới cho tập tin/thư mục <strong id="file-rename"></strong></p>
+                            <input type="text" placeholder="Nhập tên mới" id="new-name" name="new_name" value="" class="form-control" />
+                        </div>
+                        {{#if errorRename}}
+                        <div class="alert alert-danger alert-dismissible fade show m-auto" style="width: 275px;" role="alert"
+                            id="error-alert">
+                            <button type="button" class="close" data-dismiss="alert">&times</button>
+                            {{{ errorRename }}}
+                        </div>
+                        {{/if}}
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Lưu</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- New file dialog -->
+    <div class="modal fade" id="new-file-dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form action="/create" method="post">
+                    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Tạo tập tin mới</h4>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="name">File Name</label>
+                            <input type="text" placeholder="File name" class="form-control" id="name" name="name_new_file" value=""/>
+                        </div>
+                        <div class="form-group">
+                            <label for="content">Nội dung</label>
+                            <textarea rows="10" id="content" class="form-control" placeholder="Nội dung" name="content"></textarea>
+                        </div>
+                        {{#if errorFile}}
+                        <div class="alert alert-danger alert-dismissible fade show m-auto" style="width: 275px;" role="alert"
+                            id="error-alert">
+                            <button type="button" class="close" data-dismiss="alert">&times</button>
+                            {{{ errorFile }}}
+                        </div>
+                        {{/if}}
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-success">Thêm</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- New folder dialog -->
+    <div class="modal fade" id="new-folder-dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form action="/createDir" method="post">
+                    <input type="hidden" name="_csrf" value="{{ csrfToken }}">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Tạo thư mục mới</h4>
+                        <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="name">Folder Name</label>
+                            <input type="text" placeholder="Folder name" class="form-control" id="name" name="name_new_folder"/>
+                        </div>
+                        {{#if errorFolder}}
+                        <div class="alert alert-danger alert-dismissible fade show m-auto" style="width: 275px;" role="alert"
+                            id="error-alert">
+                            <button type="button" class="close" data-dismiss="alert">&times</button>
+                            {{{ errorFolder }}}
+                        </div>
+                        {{/if}}
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-success">Thêm</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- message dialog -->
+    <div class="modal fade" id="message-dialog">
+        <div class="modal-dialog">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h4 class="modal-title">Xóa file</h4>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+
+                <div class="modal-body">
+                    <p>Bạn không được cấp quyền để xóa tập tin/thư mục này</p>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-info" data-dismiss="modal">Đóng</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Add the following code if you want the name of the file appear on select
+        $(".custom-file-input").on("change", function () {
+            var fileName = $(this).val().split("\\").pop();
+            $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
+        });
+
+        $('#success-alert').slideDown(function () {
+            setTimeout(function () {
+                $('#success-alert').slideUp();
+            }, 2800);
+        });
+
+        $('#error-alert').slideDown(function () {
+            setTimeout(function () {
+                $('#error-alert').slideUp();
+            }, 2800);
+        });
+
+        function getIcon(ext) {
+            if (ext == "doc" || ext == "docx") {
+                return "file-word"
+            } else if (ext == "png" || ext == "jpg" || ext == "jpeg") {
+                return "file-image"
+            } else if (ext == "csv" || ext == "xlsx") {
+                return "file-excel"
+            } else if (ext == "pptx") {
+                return "file-powerpoint"
+            } else if (ext == "pdf") {
+                return "file-pdf"
+            } else if (ext == "mp4" || ext == "webm" || ext == "mov") {
+                return "file-video"
+            } else if (ext == "java" || ext == "py" || ext == "c" || ext == "js" || ext == "html") {
+                return "file-code"
+            } else if (ext == "zip" || ext == "rar") {
+                return "file-archive"
+            } else if (ext == "mp3" || ext == "wav" || ext == "aac" || ext == "flac") {
+                return "file-audio"
+            } else {
+                return "file"
+            }
+        }
+
+        const fileTypes = {
+            'txt': 'Text Document',
+            'zip':'Compressed File',
+            'rar':'Compressed File',
+            'jpg':'Image File',
+            'jpeg':'Image File',
+            'png':'Image File',
+            'mp3':'Audio',
+            'mp4':'Video',
+            'mkv':'Video',
+            'mov':'Video',
+            'html':'HTML Document',
+            'css':'CSS Document',
+            'php':'PHP Document',
+            'c':'C Document',
+            'py':'Python Document',
+            'doc':'Microsoft Word',
+            'docx':'Microsoft Word',
+            'pdf':'PDF Document',
+            'pptx':'Microsoft PowerPoint',
+            'xlsx':'Microsoft Excel',
+            'java':'Java Document',
+        };
+
+
+        {{!-- Get icon file --}}
+        i = 0
+        {{#each files}}
+            ext = document.getElementById('icon-file-' + i);
+            type = document.getElementById('type-file-' + i);
+            ext_value = ext.dataset.extention;
+            ext.setAttribute('class', 'fas fa-' + getIcon(ext_value));
+            type.innerHTML = fileTypes[ext_value];
+            i += 1
+        {{/each}}
+
+
+        {{!-- Get file name--}}
+        $('.delete-file').on('click', function() {
+            file_value = $(this).data('name');
+            document.getElementById('file-delete').innerHTML = file_value;
+            $('#name-file-delete').val(file_value);
+        });
+
+        $('.rename-file').on('click', function() {
+            file_value = $(this).data('name');
+            type_value = $(this).data('type');
+            document.getElementById('file-rename').innerHTML = file_value;
+            $('#new-name').val(file_value.split(',').pop());
+            $('#file-name').val(file_value);
+            $('#file-type').val(type_value);
+        });
+
+        {{!-- Show modal --}}
+        {{#if errorFile}}
+            $(document).ready(function (){
+                $('#new-file-dialog').modal('show');
+            });
+        {{/if}}
+
+        {{#if errorFolder}}
+            $(document).ready(function (){
+                $('#new-folder-dialog').modal('show');
+            });
+        {{/if}}
+
+        {{#if errorRename}}
+            $(document).ready(function (){
+                $('#confirm-rename').modal('show');
+            });
+
+            const modalVal = [];
+            {{#each lastValue}}
+                modalVal.push(`{{ this }}`);
+            {{/each}}
+
+            document.getElementById('file-rename').innerHTML = modalVal[0];
+            $('#file-name').val(modalVal[0]);
+            $('#file-type').val(modalVal[1]);
+        {{/if}}
+
+        
+    </script>
+
+</body>
